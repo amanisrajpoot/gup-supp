@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../../store/hooks';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { verifyOTP } from '../../store/slices/authSlice';
@@ -21,7 +21,7 @@ const VerifyOTPScreen: React.FC = () => {
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute();
   

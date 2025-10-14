@@ -5,9 +5,93 @@ import { MESSAGE_TYPES } from '../../constants';
 
 // Initial state
 const initialState: ChatState = {
-  chats: [],
+  chats: [
+    {
+      id: 'chat-1',
+      name: 'John Doe',
+      avatar: 'https://via.placeholder.com/150x150/007AFF/FFFFFF?text=JD',
+      lastMessage: 'Hey! How are you?',
+      lastMessageTime: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+      unreadCount: 2,
+      type: 'individual',
+      participants: ['demo-user-1', 'user-2'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 'chat-2',
+      name: 'Family Group',
+      avatar: 'https://via.placeholder.com/150x150/34C759/FFFFFF?text=FG',
+      lastMessage: 'Mom: Dinner is ready!',
+      lastMessageTime: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      unreadCount: 0,
+      type: 'group',
+      participants: ['demo-user-1', 'user-3', 'user-4', 'user-5'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 'chat-3',
+      name: 'Sarah Wilson',
+      avatar: 'https://via.placeholder.com/150x150/FF3B30/FFFFFF?text=SW',
+      lastMessage: 'Thanks for the help!',
+      lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      unreadCount: 1,
+      type: 'individual',
+      participants: ['demo-user-1', 'user-6'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
   activeChat: null,
-  messages: {},
+  messages: {
+    'chat-1': [
+      {
+        id: 'msg-1',
+        chatId: 'chat-1',
+        senderId: 'user-2',
+        content: 'Hey! How are you?',
+        type: 'text',
+        timestamp: new Date(Date.now() - 5 * 60 * 1000),
+        status: 'delivered',
+        isEncrypted: false,
+      },
+      {
+        id: 'msg-2',
+        chatId: 'chat-1',
+        senderId: 'demo-user-1',
+        content: 'I\'m doing great! Thanks for asking.',
+        type: 'text',
+        timestamp: new Date(Date.now() - 4 * 60 * 1000),
+        status: 'read',
+        isEncrypted: false,
+      },
+    ],
+    'chat-2': [
+      {
+        id: 'msg-3',
+        chatId: 'chat-2',
+        senderId: 'user-3',
+        content: 'Mom: Dinner is ready!',
+        type: 'text',
+        timestamp: new Date(Date.now() - 30 * 60 * 1000),
+        status: 'delivered',
+        isEncrypted: false,
+      },
+    ],
+    'chat-3': [
+      {
+        id: 'msg-4',
+        chatId: 'chat-3',
+        senderId: 'user-6',
+        content: 'Thanks for the help!',
+        type: 'text',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        status: 'delivered',
+        isEncrypted: false,
+      },
+    ],
+  },
   typingUsers: {},
   isLoading: false,
   error: null,

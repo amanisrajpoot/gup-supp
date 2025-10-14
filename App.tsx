@@ -1,6 +1,6 @@
 /**
- * WhatsApp Clone - Main App Component
- * A production-ready WhatsApp clone built with React Native and TypeScript
+ * Gup Supp - Main App Component
+ * A production-ready messaging app built with React Native and TypeScript
  */
 
 import React from 'react';
@@ -15,6 +15,10 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { LoadingScreen } from './src/components/common/LoadingScreen';
 
 const App = (): React.JSX.Element => {
+  console.log('🚀 Gup Supp App starting...');
+  console.log('📱 React Native version:', require('react-native/package.json').version);
+  console.log('🔧 Development mode:', __DEV__);
+  
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
@@ -25,9 +29,9 @@ const App = (): React.JSX.Element => {
               backgroundColor="#075E54"
               translucent={false}
             />
-            <View style={styles.container}>
-              <AppNavigator />
-            </View>
+                <View style={styles.container}>
+                  <AppNavigator />
+                </View>
           </GestureHandlerRootView>
         </SafeAreaProvider>
       </PersistGate>

@@ -8,19 +8,22 @@ import {
   SafeAreaView,
   RefreshControl,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../types/ui';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import { RootState, AppDispatch } from '../../store';
 import { loadChats } from '../../store/slices/chatSlice';
 import { Chat } from '../../types/api';
+import { DebugButton } from '../../components/debug/DebugButton';
 
 const ChatsScreen: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   
-  const { chats, isLoading } = useSelector((state: RootState) => state.chat);
+  const { chats, isLoading } = useAppSelector((state) => state.chat);
 
   useEffect(() => {
     dispatch(loadChats());
@@ -31,10 +34,14 @@ const ChatsScreen: React.FC = () => {
   };
 
   const handleChatPress = (chat: Chat) => {
-    navigation.navigate('Chat' as never, { 
+    navigation.navigate('Chat', { 
       chatId: chat.id, 
       chatName: chat.name || 'Chat' 
-    } as never);
+    });
+  };
+
+  const handleContactsPress = () => {
+    navigation.navigate('Contacts');
   };
 
   const renderChatItem = ({ item }: { item: Chat }) => (
@@ -105,10 +112,16 @@ const ChatsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
-        <TouchableOpacity style={styles.newChatButton}>
-          <Icon name="create-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleContactsPress}>
+            <Icon name="people-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.newChatButton}>
+            <Icon name="create-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
+      <DebugButton />
 
       <FlatList
         data={chats}
@@ -146,6 +159,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
   newChatButton: {
     width: 40,

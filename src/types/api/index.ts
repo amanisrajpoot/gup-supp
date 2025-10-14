@@ -70,6 +70,7 @@ export interface Contact {
   avatar?: string;
   isRegistered: boolean;
   lastSeen?: Date;
+  isOnline: boolean;
   isBlocked: boolean;
 }
 

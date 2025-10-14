@@ -19,6 +19,27 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
+      // Demo login for testing
+      if (credentials.phoneNumber === '1234567890' && credentials.password === 'demo123') {
+        const demoUser: User = {
+          id: 'demo-user-1',
+          phoneNumber: '1234567890',
+          name: 'Demo User',
+          avatar: 'https://via.placeholder.com/150x150/25D366/FFFFFF?text=DU',
+          status: 'Hey there! I am using Gup Supp',
+          lastSeen: new Date(),
+          isOnline: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        
+        return {
+          user: demoUser,
+          token: 'demo-token-12345',
+          refreshToken: 'demo-refresh-token-12345',
+        };
+      }
+      
       const response = await authService.login(credentials);
       return response;
     } catch (error: any) {

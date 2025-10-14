@@ -7,13 +7,13 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../../store/hooks';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import { logout } from '../../store/slices/authSlice';
 
 const SettingsScreen: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const handleLogout = () => {
     dispatch(logout());

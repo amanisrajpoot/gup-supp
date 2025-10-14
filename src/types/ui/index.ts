@@ -1,4 +1,5 @@
 // UI State Types
+import { Contact } from '../api';
 export interface LoadingState {
   isLoading: boolean;
   message?: string;
@@ -12,6 +13,7 @@ export interface ErrorState {
 
 // Navigation Types
 export type RootStackParamList = {
+  Test: undefined;
   Auth: undefined;
   Main: undefined;
   Chat: { chatId: string; chatName?: string };
@@ -19,6 +21,7 @@ export type RootStackParamList = {
   Settings: undefined;
   GroupInfo: { groupId: string };
   MediaViewer: { mediaUrl: string; mediaType: string };
+  Contacts: undefined;
 };
 
 export type AuthStackParamList = {
@@ -160,4 +163,4 @@ export interface AnimationConfig {
 
 // Import React Native types
 import { TextStyle } from 'react-native';
-import { Message } from './api';
+import { Message } from '../api';

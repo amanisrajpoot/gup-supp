@@ -11,8 +11,10 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../../store/hooks';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { AuthStackParamList } from '../../types/ui';
 
 import { register } from '../../store/slices/authSlice';
 import { VALIDATION } from '../../constants';
@@ -24,8 +26,8 @@ const RegisterScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const dispatch = useDispatch();
-  const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation<StackNavigationProp<AuthStackParamList>>();
 
   const handleRegister = async () => {
     if (!phoneNumber.trim()) {
@@ -66,7 +68,7 @@ const RegisterScreen: React.FC = () => {
     try {
       setIsLoading(true);
       await dispatch(register({ phoneNumber, name, password })).unwrap();
-      navigation.navigate('VerifyOTP' as never, { phoneNumber } as never);
+      navigation.navigate('VerifyOTP', { phoneNumber });
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'An error occurred during registration');
     } finally {

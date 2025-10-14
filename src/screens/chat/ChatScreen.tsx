@@ -1,36 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
 
 import { RootState, AppDispatch } from '../../store';
-import { loadMessages, sendMessage } from '../../store/slices/chatSlice';
+import { loadMessages, sendMessage, setTyping, clearTyping } from '../../store/slices/chatSlice';
 import { Message } from '../../types/api';
 import { MESSAGE_TYPES } from '../../constants';
+import { MessageList } from '../../components/chat/MessageList';
+import { ChatInput } from '../../components/chat/ChatInput';
+import { useWebSocket, useWebSocketMessage } from '../../hooks/useWebSocket';
 
 const ChatScreen: React.FC = () => {
-  const [messageText, setMessageText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation();
   const route = useRoute();
   
   const { chatId } = route.params as { chatId: string; chatName?: string };
   
-  const { messages, isLoading } = useSelector((state: RootState) => state.chat);
+  const { messages, isLoading, typingUsers } = useSelector((state: RootState) => state.chat);
+  const { user } = useSelector((state: RootState) => state.auth);
   const currentMessages = messages[chatId] || [];
+  const currentTypingUsers = typingUsers[chatId] || [];
+
+  const { sendMessage: sendWebSocketMessage, sendTyping } = useWebSocket();
+
+  // WebSocket message handlers
+  const handleWebSocketMessage = useCallback((data: any) => {
+    // Handle incoming messages from WebSocket
+    console.log('Received message via WebSocket:', data);
+  }, []);
+
+  const handleTypingIndicator = useCallback((data: any) => {
+    dispatch(setTyping({
+      chatId: data.chatId,
+      userId: data.userId,
+      isTyping: data.isTyping,
+    }));
+  }, [dispatch]);
+
+  useWebSocketMessage(handleWebSocketMessage, handleTypingIndicator);
 
   useEffect(() => {
     if (chatId) {
@@ -38,54 +54,63 @@ const ChatScreen: React.FC = () => {
     }
   }, [dispatch, chatId]);
 
-  const handleSendMessage = async () => {
-    if (!messageText.trim()) return;
-
-    const messageContent = messageText.trim();
-    setMessageText('');
-
+  const handleSendMessage = useCallback(async (messageContent: string, type: string) => {
     try {
+      // Send via Redux (which will also send via API)
       await dispatch(sendMessage({
         chatId,
         content: messageContent,
-        type: MESSAGE_TYPES.TEXT,
+        type,
       })).unwrap();
+
+      // Also send via WebSocket for real-time delivery
+      sendWebSocketMessage(chatId, {
+        content: messageContent,
+        type,
+        timestamp: new Date(),
+      });
     } catch (error: any) {
       console.error('Failed to send message:', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
     }
-  };
+  }, [dispatch, chatId, sendWebSocketMessage]);
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isOwn = item.senderId === 'current-user'; // TODO: Get current user ID from auth state
-    
-    return (
-      <View style={[styles.messageContainer, isOwn && styles.ownMessageContainer]}>
-        <View style={[styles.messageBubble, isOwn && styles.ownMessageBubble]}>
-          <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
-            {item.content}
-          </Text>
-          <Text style={[styles.messageTime, isOwn && styles.ownMessageTime]}>
-            {formatTime(item.timestamp)}
-          </Text>
-        </View>
-      </View>
+  const handleTyping = useCallback((isTyping: boolean) => {
+    if (isTyping) {
+      dispatch(setTyping({
+        chatId,
+        userId: user?.id || 'current-user',
+        isTyping: true,
+      }));
+      sendTyping(chatId, true);
+    } else {
+      dispatch(clearTyping(chatId));
+      sendTyping(chatId, false);
+    }
+  }, [dispatch, chatId, user?.id, sendTyping]);
+
+  const handleMessagePress = useCallback((message: Message) => {
+    // Handle message press (e.g., show message options)
+    console.log('Message pressed:', message);
+  }, []);
+
+  const handleMessageLongPress = useCallback((message: Message) => {
+    // Handle message long press (e.g., show context menu)
+    Alert.alert(
+      'Message Options',
+      'What would you like to do?',
+      [
+        { text: 'Reply', onPress: () => console.log('Reply to message') },
+        { text: 'Forward', onPress: () => console.log('Forward message') },
+        { text: 'Delete', onPress: () => console.log('Delete message'), style: 'destructive' },
+        { text: 'Cancel', style: 'cancel' },
+      ]
     );
-  };
+  }, []);
 
-  const formatTime = (timestamp: Date) => {
-    const messageTime = new Date(timestamp);
-    return messageTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Icon name="chatbubbles-outline" size={64} color="#ccc" />
-      <Text style={styles.emptyTitle}>No Messages Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Start the conversation by sending a message
-      </Text>
-    </View>
-  );
+  const handleRefresh = useCallback(() => {
+    dispatch(loadMessages(chatId));
+  }, [dispatch, chatId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -94,41 +119,22 @@ const ChatScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         <View style={styles.messagesContainer}>
-          <FlatList
-            data={currentMessages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
-            ListEmptyComponent={renderEmptyState}
-            contentContainerStyle={currentMessages.length === 0 ? styles.emptyContainer : styles.messagesList}
-            inverted
+          <MessageList
+            messages={currentMessages}
+            typingUsers={currentTypingUsers}
+            currentUserId={user?.id || 'current-user'}
+            onRefresh={handleRefresh}
+            isRefreshing={isLoading}
+            onMessagePress={handleMessagePress}
+            onMessageLongPress={handleMessageLongPress}
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.textInput}
-              value={messageText}
-              onChangeText={setMessageText}
-              placeholder="Type a message..."
-              multiline
-              maxLength={4096}
-            />
-            <TouchableOpacity style={styles.attachButton}>
-              <Icon name="attach-outline" size={24} color="#666" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cameraButton}>
-              <Icon name="camera-outline" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
-            onPress={handleSendMessage}
-            disabled={!messageText.trim()}
-          >
-            <Icon name="send" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          onTyping={handleTyping}
+          disabled={isLoading}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -144,115 +150,6 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     flex: 1,
-  },
-  messagesList: {
-    paddingVertical: 16,
-  },
-  messageContainer: {
-    marginHorizontal: 16,
-    marginVertical: 4,
-    alignItems: 'flex-start',
-  },
-  ownMessageContainer: {
-    alignItems: 'flex-end',
-  },
-  messageBubble: {
-    maxWidth: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  ownMessageBubble: {
-    backgroundColor: '#dcf8c6',
-  },
-  messageText: {
-    fontSize: 16,
-    color: '#333',
-    lineHeight: 20,
-  },
-  ownMessageText: {
-    color: '#333',
-  },
-  messageTime: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  ownMessageTime: {
-    color: '#666',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  inputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-    maxHeight: 100,
-    paddingVertical: 4,
-  },
-  attachButton: {
-    padding: 4,
-    marginRight: 4,
-  },
-  cameraButton: {
-    padding: 4,
-  },
-  sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#25D366',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });
 

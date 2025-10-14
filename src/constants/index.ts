@@ -1,11 +1,11 @@
 // API Constants
 export const API_BASE_URL = __DEV__ 
   ? 'http://localhost:3000/api' 
-  : 'https://your-production-api.com/api';
+  : 'https://gup-supp-api.com/api';
 
 export const WS_BASE_URL = __DEV__
   ? 'ws://localhost:3000'
-  : 'wss://your-production-websocket.com';
+  : 'wss://gup-supp-websocket.com';
 
 // Storage Keys
 export const STORAGE_KEYS = {
@@ -57,12 +57,7 @@ export const CALL_STATUS = {
   MISSED: 'missed',
 } as const;
 
-// Privacy Settings
-export const PRIVACY_LEVELS = {
-  EVERYONE: 'everyone',
-  CONTACTS: 'contacts',
-  NOBODY: 'nobody',
-} as const;
+// Privacy Settings (moved to bottom)
 
 // Theme
 export const THEMES = {
@@ -215,4 +210,39 @@ export const WS_EVENTS = {
   CALL_ANSWER: 'call_answer',
   CALL_END: 'call_end',
   CALL_REJECT: 'call_reject',
+  KEY_EXCHANGE: 'key_exchange',
+  ENCRYPTED_MESSAGE: 'encrypted_message',
+} as const;
+
+// Encryption Events
+export const ENCRYPTION_EVENTS = {
+  KEY_GENERATED: 'key_generated',
+  KEY_EXCHANGED: 'key_exchanged',
+  MESSAGE_ENCRYPTED: 'message_encrypted',
+  MESSAGE_DECRYPTED: 'message_decrypted',
+  KEY_ROTATED: 'key_rotated',
+} as const;
+
+// Privacy Levels
+export const PRIVACY_LEVELS = {
+  EVERYONE: 'everyone',
+  CONTACTS: 'contacts',
+  NOBODY: 'nobody',
+} as const;
+
+// Notification Categories
+export const NOTIFICATION_CATEGORIES = {
+  MESSAGE: 'MESSAGE',
+  CALL: 'CALL',
+  GROUP: 'GROUP',
+  SYSTEM: 'SYSTEM',
+} as const;
+
+// Notification Actions
+export const NOTIFICATION_ACTIONS = {
+  REPLY: 'REPLY',
+  MARK_READ: 'MARK_READ',
+  ANSWER_CALL: 'ANSWER_CALL',
+  REJECT_CALL: 'REJECT_CALL',
+  VIEW_MESSAGE: 'VIEW_MESSAGE',
 } as const;

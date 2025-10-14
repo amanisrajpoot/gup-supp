@@ -1,5 +1,5 @@
 // Redux Store Types
-import { User, Chat, Message, Contact, Group, Call } from './api';
+import { User, Chat, Message, Contact, Group, Call } from '../api';
 
 // Auth State
 export interface AuthState {
@@ -161,3 +161,6 @@ export interface SettingsActions {
   exportData: () => void;
   importData: (data: any) => void;
 }
+
+// Re-export API types for convenience
+export type { User, Chat, Message, Contact, Group, Call } from '../api';

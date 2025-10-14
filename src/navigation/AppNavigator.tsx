@@ -15,12 +15,14 @@ import VerifyOTPScreen from '../screens/auth/VerifyOTPScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ChatsScreen from '../screens/chat/ChatsScreen';
 import ChatScreen from '../screens/chat/ChatScreen';
+import ContactsScreen from '../screens/contacts/ContactsScreen';
 import StatusScreen from '../screens/status/StatusScreen';
 import CallsScreen from '../screens/calls/CallsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import GroupInfoScreen from '../screens/group/GroupInfoScreen';
 import MediaViewerScreen from '../screens/media/MediaViewerScreen';
+import { TestScreen } from '../screens/TestScreen';
 
 // Navigation types
 import { RootStackParamList, AuthStackParamList, MainTabParamList } from '../types/ui';
@@ -138,6 +140,21 @@ const AppNavigator = () => {
               options={{
                 headerShown: true,
                 title: 'Chat',
+                headerStyle: {
+                  backgroundColor: '#075E54',
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                },
+              }}
+            />
+            <Stack.Screen 
+              name="Contacts" 
+              component={ContactsScreen}
+              options={{
+                headerShown: true,
+                title: 'Contacts',
                 headerStyle: {
                   backgroundColor: '#075E54',
                 },

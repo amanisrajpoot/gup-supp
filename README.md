@@ -1,6 +1,6 @@
-# WhatsApp Clone
+# Gup Supp
 
-A production-ready WhatsApp clone built with React Native and TypeScript, following clean architecture principles and structured development phases.
+A production-ready messaging app built with React Native and TypeScript, following clean architecture principles and structured development phases.
 
 ## 🚀 Features
 

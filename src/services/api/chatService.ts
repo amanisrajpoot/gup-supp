@@ -1,5 +1,7 @@
 import { API_BASE_URL } from '../../constants';
 import { Chat, Message } from '../../types/api';
+import { encryptionService } from '../encryption/EncryptionService';
+import { keyManagementService } from '../encryption/KeyManagementService';
 
 class ChatService {
   private baseUrl = `${API_BASE_URL}/chat`;
@@ -46,8 +48,27 @@ class ChatService {
     }
   }
 
-  async sendMessage(chatId: string, content: string, type: string, token: string): Promise<Message> {
+  async sendMessage(chatId: string, content: string, type: string, token: string, recipientId?: string): Promise<Message> {
     try {
+      let encryptedContent = content;
+      let encryptionKey = null;
+
+      // Encrypt message if recipient is specified
+      if (recipientId) {
+        const keyBundle = await keyManagementService.fetchKeyBundle(recipientId);
+        if (keyBundle) {
+          const keyPair = await keyManagementService.getKeyBundle(recipientId);
+          if (keyPair) {
+            const encryptedMessage = encryptionService.encryptMessage(
+              content,
+              keyBundle.identityKey.publicKey,
+              keyPair.identityKey.privateKey
+            );
+            encryptedContent = JSON.stringify(encryptedMessage);
+            encryptionKey = encryptedMessage.keyId;
+          }
+        }
+      }
       const response = await fetch(`${this.baseUrl}/messages`, {
         method: 'POST',
         headers: {
@@ -56,8 +77,9 @@ class ChatService {
         },
         body: JSON.stringify({
           chatId,
-          content,
+          content: encryptedContent,
           type,
+          encryptionKey,
         }),
       });
 
@@ -281,6 +303,53 @@ class ChatService {
     } catch (error: any) {
       throw new Error(error.message || 'Network error while setting typing status');
     }
+  }
+
+  /**
+   * Decrypt a message
+   */
+  async decryptMessage(message: Message, senderId: string): Promise<string> {
+    try {
+      if (!message.encryptionKey) {
+        return message.content; // Message is not encrypted
+      }
+
+      const keyBundle = await keyManagementService.getKeyBundle(senderId);
+      if (!keyBundle) {
+        throw new Error('Sender key bundle not found');
+      }
+
+      const encryptedMessage = JSON.parse(message.content);
+      const decryptedContent = encryptionService.decryptMessage(
+        encryptedMessage,
+        keyBundle.identityKey.publicKey,
+        keyBundle.identityKey.privateKey
+      );
+
+      return decryptedContent;
+    } catch (error) {
+      console.error('Failed to decrypt message:', error);
+      return message.content; // Return original content if decryption fails
+    }
+  }
+
+  /**
+   * Decrypt multiple messages
+   */
+  async decryptMessages(messages: Message[], senderId: string): Promise<Message[]> {
+    const decryptedMessages = await Promise.all(
+      messages.map(async (message) => {
+        try {
+          const decryptedContent = await this.decryptMessage(message, senderId);
+          return { ...message, content: decryptedContent };
+        } catch (error) {
+          console.error('Failed to decrypt message:', message.id, error);
+          return message; // Return original message if decryption fails
+        }
+      })
+    );
+
+    return decryptedMessages;
   }
 }
 

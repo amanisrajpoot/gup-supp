@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../../store/hooks';
 import { useNavigation } from '@react-navigation/native';
 
 import { login } from '../../store/slices/authSlice';
@@ -21,7 +21,7 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
   const handleLogin = async () => {
@@ -66,8 +66,14 @@ const LoginScreen: React.FC = () => {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Welcome to WhatsApp Clone</Text>
+            <Text style={styles.title}>Welcome to Gup Supp</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
+            
+            <View style={styles.demoCredentials}>
+              <Text style={styles.demoTitle}>Demo Credentials:</Text>
+              <Text style={styles.demoText}>Phone: 1234567890</Text>
+              <Text style={styles.demoText}>Password: demo123</Text>
+            </View>
           </View>
 
           <View style={styles.form}>
@@ -105,6 +111,17 @@ const LoginScreen: React.FC = () => {
               <Text style={styles.loginButtonText}>
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.quickLoginButton} 
+              onPress={() => {
+                setPhoneNumber('1234567890');
+                setPassword('demo123');
+                handleLogin();
+              }}
+            >
+              <Text style={styles.quickLoginButtonText}>Quick Login (Demo)</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -154,6 +171,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  demoCredentials: {
+    backgroundColor: 'rgba(7, 94, 84, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#075E54',
+  },
+  demoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#075E54',
+    marginBottom: 4,
+  },
+  demoText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
   },
   form: {
     marginBottom: 32,
@@ -185,6 +222,19 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: {
     backgroundColor: '#ccc',
+  },
+  quickLoginButton: {
+    backgroundColor: '#25D366',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  quickLoginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   loginButtonText: {
     color: '#fff',
