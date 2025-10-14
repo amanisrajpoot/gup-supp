@@ -1,97 +1,269 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# WhatsApp Clone
 
-# Getting Started
+A production-ready WhatsApp clone built with React Native and TypeScript, following clean architecture principles and structured development phases.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🚀 Features
 
-## Step 1: Start Metro
+### Phase 1: Foundation & Core Framework ✅
+- [x] **Authentication System**
+  - User registration with phone number verification
+  - Login/logout functionality
+  - OTP verification
+  - Password reset
+- [x] **Basic Navigation**
+  - Stack navigation for auth flow
+  - Tab navigation for main app
+  - Deep linking support
+- [x] **Core UI Components**
+  - Chat list screen
+  - Individual chat screen
+  - Settings screen
+  - Profile management
+- [x] **State Management**
+  - Redux Toolkit for state management
+  - Redux Persist for data persistence
+  - Type-safe actions and reducers
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Phase 2: Messaging & User Management (In Progress)
+- [ ] **Real-time Messaging**
+  - WebSocket integration
+  - Message delivery status
+  - Typing indicators
+  - Message encryption
+- [ ] **Contacts Management**
+  - Phone contacts sync
+  - User profiles with avatars
+  - Contact search and filtering
+- [ ] **Media Attachments**
+  - Image sharing
+  - Video sharing
+  - Document sharing
+  - Audio messages
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Phase 3: Privacy & Security (Planned)
+- [ ] **End-to-End Encryption**
+  - Signal Protocol implementation
+  - Key exchange and management
+  - Message encryption/decryption
+- [ ] **Privacy Features**
+  - Last seen controls
+  - Read receipts
+  - Profile photo privacy
+  - Status privacy
+- [ ] **Notifications**
+  - Push notifications
+  - Local notifications
+  - Notification preferences
 
-```sh
-# Using npm
-npm start
+### Phase 4: Advanced Features (Planned)
+- [ ] **Voice & Video Calls**
+  - WebRTC integration
+  - Call management
+  - Call history
+- [ ] **Group Chats**
+  - Group creation and management
+  - Group settings
+  - Admin controls
+- [ ] **Status Updates**
+  - Stories functionality
+  - Status sharing
+  - Status privacy controls
 
-# OR using Yarn
-yarn start
+## 🏗️ Architecture
+
+### Clean Architecture Layers
+```
+src/
+├── components/          # Reusable UI components
+│   ├── common/         # Common components
+│   ├── chat/           # Chat-specific components
+│   ├── auth/           # Authentication components
+│   ├── contacts/       # Contact management components
+│   └── settings/       # Settings components
+├── screens/            # Screen components
+│   ├── auth/           # Authentication screens
+│   ├── chat/           # Chat screens
+│   ├── contacts/       # Contact screens
+│   └── settings/       # Settings screens
+├── navigation/         # Navigation configuration
+├── services/           # Business logic layer
+│   ├── api/            # API services
+│   ├── storage/        # Local storage services
+│   ├── encryption/     # Encryption services
+│   └── notifications/  # Notification services
+├── store/              # State management
+│   ├── slices/         # Redux slices
+│   └── selectors/      # State selectors
+├── types/              # TypeScript type definitions
+│   ├── api/            # API types
+│   ├── ui/             # UI types
+│   └── store/          # Store types
+├── utils/              # Utility functions
+├── constants/          # App constants
+└── hooks/              # Custom React hooks
 ```
 
-## Step 2: Build and run your app
+### Technology Stack
+- **Frontend**: React Native 0.82.0
+- **Language**: TypeScript
+- **State Management**: Redux Toolkit + Redux Persist
+- **Navigation**: React Navigation 6
+- **UI Components**: Custom components with React Native Vector Icons
+- **Storage**: AsyncStorage for local data
+- **Networking**: Fetch API with custom service layer
+- **Architecture**: Clean Architecture with MVVM pattern
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 🛠️ Development Setup
 
-### Android
+### Prerequisites
+- Node.js >= 20.19.4 (currently using 20.12.2 with warnings)
+- React Native CLI
+- Xcode (for iOS development)
+- Android Studio (for Android development)
+- CocoaPods (for iOS dependencies)
 
-```sh
-# Using npm
-npm run android
+### Installation
 
-# OR using Yarn
-yarn android
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd WhatsAppClone
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **iOS Setup**
+   ```bash
+   cd ios
+   pod install
+   cd ..
+   ```
+
+4. **Run the application**
+   ```bash
+   # iOS
+   npx react-native run-ios
+   
+   # Android
+   npx react-native run-android
+   ```
+
+### Development Commands
+
+```bash
+# Start Metro bundler
+npx react-native start
+
+# Run on iOS
+npx react-native run-ios
+
+# Run on Android
+npx react-native run-android
+
+# Run tests
+npm test
+
+# Lint code
+npm run lint
+
+# Type check
+npx tsc --noEmit
 ```
+
+## 📱 Screenshots
+
+### Authentication Flow
+- Login Screen with phone number and password
+- Registration Screen with OTP verification
+- Forgot Password Screen
+
+### Main App
+- Chats Tab with conversation list
+- Individual Chat Screen with message bubbles
+- Settings Screen with user profile
+- Status and Calls tabs (placeholder)
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env` file in the root directory:
+
+```env
+API_BASE_URL=http://localhost:3000/api
+WS_BASE_URL=ws://localhost:3000
+```
+
+### API Configuration
+Update the API base URL in `src/constants/index.ts`:
+
+```typescript
+export const API_BASE_URL = __DEV__ 
+  ? 'http://localhost:3000/api' 
+  : 'https://your-production-api.com/api';
+```
+
+## 🧪 Testing
+
+The project includes comprehensive testing setup:
+
+```bash
+# Run unit tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run E2E tests
+npm run test:e2e
+```
+
+## 📦 Build & Deployment
 
 ### iOS
+```bash
+# Build for iOS
+npx react-native run-ios --configuration Release
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+# Archive for App Store
+# Use Xcode to create archive
 ```
 
-Then, and every time you update your native dependencies, run:
+### Android
+```bash
+# Build APK
+cd android
+./gradlew assembleRelease
 
-```sh
-bundle exec pod install
+# Build AAB for Play Store
+./gradlew bundleRelease
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## 🤝 Contributing
 
-```sh
-# Using npm
-npm run ios
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-# OR using Yarn
-yarn ios
-```
+## 📄 License
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## 🙏 Acknowledgments
 
-## Step 3: Modify your app
+- React Native team for the amazing framework
+- Redux team for state management
+- React Navigation team for navigation
+- All open source contributors
 
-Now that you have successfully run the app, let's make changes!
+## 📞 Support
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+For support, email support@whatsappclone.com or create an issue in the repository.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+---
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+**Note**: This is a clone project for educational purposes. WhatsApp is a trademark of Meta Platforms, Inc.

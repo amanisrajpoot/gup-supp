@@ -1,44 +1,44 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
+ * WhatsApp Clone - Main App Component
+ * A production-ready WhatsApp clone built with React Native and TypeScript
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import React from 'react';
+import { StatusBar, StyleSheet, View } from 'react-native';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+import { store, persistor } from './src/store';
+import AppNavigator from './src/navigation/AppNavigator';
+import { LoadingScreen } from './src/components/common/LoadingScreen';
 
+const App = (): React.JSX.Element => {
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <Provider store={store}>
+      <PersistGate loading={<LoadingScreen />} persistor={persistor}>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={styles.container}>
+            <StatusBar
+              barStyle="light-content"
+              backgroundColor="#075E54"
+              translucent={false}
+            />
+            <View style={styles.container}>
+              <AppNavigator />
+            </View>
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </PersistGate>
+    </Provider>
   );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
 });
 
