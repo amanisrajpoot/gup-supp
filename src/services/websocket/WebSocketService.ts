@@ -1,14 +1,15 @@
-import { io, Socket } from 'socket.io-client';
 import { WS_BASE_URL, WS_EVENTS } from '../../constants';
 import { WebSocketMessage, TypingIndicator, ReadReceipt } from '../../types/api';
 
 class WebSocketService {
-  private socket: Socket | null = null;
+  private socket: WebSocket | null = null;
   private isConnected = false;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private eventListeners: Map<string, Function[]> = new Map();
+  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private token: string | null = null;
 
   constructor() {
     this.setupEventListeners();
@@ -17,33 +18,38 @@ class WebSocketService {
   connect(token: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.socket = io(WS_BASE_URL, {
-          auth: {
-            token,
-          },
-          transports: ['websocket'],
-          timeout: 20000,
-        });
+        this.token = token;
+        const wsUrl = `${WS_BASE_URL}/ws?token=${encodeURIComponent(token)}`;
+        this.socket = new WebSocket(wsUrl);
 
-        this.socket.on('connect', () => {
+        this.socket.onopen = () => {
           console.log('WebSocket connected');
           this.isConnected = true;
           this.reconnectAttempts = 0;
           resolve();
-        });
+        };
 
-        this.socket.on('disconnect', (reason) => {
-          console.log('WebSocket disconnected:', reason);
+        this.socket.onclose = (event) => {
+          console.log('WebSocket disconnected:', event.code, event.reason);
           this.isConnected = false;
-          this.handleReconnect();
-        });
+          if (event.code !== 1000) { // Not a normal closure
+            this.handleReconnect();
+          }
+        };
 
-        this.socket.on('connect_error', (error) => {
+        this.socket.onerror = (error) => {
           console.error('WebSocket connection error:', error);
           reject(error);
-        });
+        };
 
-        this.setupMessageHandlers();
+        this.socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            this.handleIncomingMessage(data);
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error);
+          }
+        };
 
       } catch (error) {
         console.error('Failed to create WebSocket connection:', error);
@@ -53,8 +59,12 @@ class WebSocketService {
   }
 
   disconnect(): void {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.close(1000, 'Client disconnect');
       this.socket = null;
       this.isConnected = false;
     }
@@ -69,28 +79,18 @@ class WebSocketService {
     this.addEventListener('call', this.handleCall.bind(this));
   }
 
-  private setupMessageHandlers(): void {
-    if (!this.socket) return;
-
-    this.socket.on(WS_EVENTS.MESSAGE, (data: WebSocketMessage) => {
-      this.emit('message', data);
-    });
-
-    this.socket.on(WS_EVENTS.TYPING, (data: TypingIndicator) => {
-      this.emit('typing', data);
-    });
-
-    this.socket.on(WS_EVENTS.READ_RECEIPT, (data: ReadReceipt) => {
-      this.emit('read_receipt', data);
-    });
-
-    this.socket.on(WS_EVENTS.USER_STATUS, (data: any) => {
-      this.emit('user_status', data);
-    });
-
-    this.socket.on(WS_EVENTS.CALL, (data: any) => {
-      this.emit('call', data);
-    });
+  private handleIncomingMessage(data: any): void {
+    if (data.type === 'message') {
+      this.emit('message', data.payload);
+    } else if (data.type === 'typing') {
+      this.emit('typing', data.payload);
+    } else if (data.type === 'read_receipt') {
+      this.emit('read_receipt', data.payload);
+    } else if (data.type === 'user_status') {
+      this.emit('user_status', data.payload);
+    } else if (data.type === 'call') {
+      this.emit('call', data.payload);
+    }
   }
 
   private handleReconnect(): void {
@@ -104,9 +104,11 @@ class WebSocketService {
 
     console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
-    setTimeout(() => {
-      if (this.socket && !this.isConnected) {
-        this.socket.connect();
+    this.reconnectTimeout = setTimeout(() => {
+      if (this.token && !this.isConnected) {
+        this.connect(this.token).catch((error) => {
+          console.error('Reconnection failed:', error);
+        });
       }
     }, delay);
   }
@@ -134,43 +136,59 @@ class WebSocketService {
 
   // Public methods for sending data
   sendMessage(chatId: string, message: any): void {
-    if (this.socket && this.isConnected) {
-      this.socket.emit(WS_EVENTS.MESSAGE, {
-        chatId,
-        message,
-        timestamp: new Date(),
-      });
+    if (this.socket && this.isConnected && this.socket.readyState === WebSocket.OPEN) {
+      const payload = {
+        type: 'message',
+        payload: {
+          chatId,
+          message,
+          timestamp: new Date().toISOString(),
+        },
+      };
+      this.socket.send(JSON.stringify(payload));
     } else {
       console.warn('WebSocket not connected. Cannot send message.');
     }
   }
 
   sendTyping(chatId: string, isTyping: boolean): void {
-    if (this.socket && this.isConnected) {
-      this.socket.emit(WS_EVENTS.TYPING, {
-        chatId,
-        isTyping,
-        timestamp: new Date(),
-      });
+    if (this.socket && this.isConnected && this.socket.readyState === WebSocket.OPEN) {
+      const payload = {
+        type: 'typing',
+        payload: {
+          chatId,
+          isTyping,
+          timestamp: new Date().toISOString(),
+        },
+      };
+      this.socket.send(JSON.stringify(payload));
     }
   }
 
   sendReadReceipt(messageId: string, chatId: string): void {
-    if (this.socket && this.isConnected) {
-      this.socket.emit(WS_EVENTS.READ_RECEIPT, {
-        messageId,
-        chatId,
-        timestamp: new Date(),
-      });
+    if (this.socket && this.isConnected && this.socket.readyState === WebSocket.OPEN) {
+      const payload = {
+        type: 'read_receipt',
+        payload: {
+          messageId,
+          chatId,
+          timestamp: new Date().toISOString(),
+        },
+      };
+      this.socket.send(JSON.stringify(payload));
     }
   }
 
   updateUserStatus(status: 'online' | 'offline' | 'away'): void {
-    if (this.socket && this.isConnected) {
-      this.socket.emit(WS_EVENTS.USER_STATUS, {
-        status,
-        timestamp: new Date(),
-      });
+    if (this.socket && this.isConnected && this.socket.readyState === WebSocket.OPEN) {
+      const payload = {
+        type: 'user_status',
+        payload: {
+          status,
+          timestamp: new Date().toISOString(),
+        },
+      };
+      this.socket.send(JSON.stringify(payload));
     }
   }
 
@@ -201,11 +219,11 @@ class WebSocketService {
 
   // Getters
   get connected(): boolean {
-    return this.isConnected;
+    return this.isConnected && this.socket?.readyState === WebSocket.OPEN;
   }
 
   get socketId(): string | null {
-    return this.socket?.id || null;
+    return null; // Native WebSocket doesn't have socket IDs
   }
 }
 

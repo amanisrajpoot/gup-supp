@@ -20,8 +20,27 @@ class ChatService {
         throw new Error(errorData.message || 'Failed to load chats');
       }
 
-      const data: Chat[] = await response.json();
-      return data;
+      const data: any[] = await response.json();
+      return data.map((chat: any) => ({
+        id: chat.id,
+        type: chat.type,
+        name: chat.name,
+        participants: chat.participants,
+        lastMessage: chat.lastMessage ? {
+          id: chat.lastMessage.id,
+          chatId: chat.id,
+          senderId: chat.lastMessage.senderId,
+          content: chat.lastMessage.content,
+          type: chat.lastMessage.type,
+          timestamp: new Date(chat.lastMessage.createdAt),
+          status: chat.lastMessage.status || 'sent',
+          isEdited: false,
+          isDeleted: false,
+        } : undefined,
+        unreadCount: 0, // TODO: Implement unread count
+        createdAt: new Date(chat.createdAt),
+        updatedAt: new Date(chat.createdAt),
+      }));
     } catch (error: any) {
       throw new Error(error.message || 'Network error while loading chats');
     }
@@ -41,8 +60,18 @@ class ChatService {
         throw new Error(errorData.message || 'Failed to load messages');
       }
 
-      const data: Message[] = await response.json();
-      return data;
+      const data: any[] = await response.json();
+      return data.map((msg: any) => ({
+        id: msg.id,
+        chatId: msg.chatId,
+        senderId: msg.senderId,
+        content: msg.content,
+        type: msg.type,
+        timestamp: new Date(msg.createdAt),
+        status: msg.status || 'sent',
+        isEdited: msg.editedAt != null,
+        isDeleted: msg.deletedAt != null,
+      }));
     } catch (error: any) {
       throw new Error(error.message || 'Network error while loading messages');
     }
@@ -53,23 +82,28 @@ class ChatService {
       let encryptedContent = content;
       let encryptionKey = null;
 
-      // Encrypt message if recipient is specified
+      // Encrypt message if recipient is specified (for future E2E support)
       if (recipientId) {
-        const keyBundle = await keyManagementService.fetchKeyBundle(recipientId);
-        if (keyBundle) {
-          const keyPair = await keyManagementService.getKeyBundle(recipientId);
-          if (keyPair) {
-            const encryptedMessage = encryptionService.encryptMessage(
-              content,
-              keyBundle.identityKey.publicKey,
-              keyPair.identityKey.privateKey
-            );
-            encryptedContent = JSON.stringify(encryptedMessage);
-            encryptionKey = encryptedMessage.keyId;
+        try {
+          const keyBundle = await keyManagementService.fetchKeyBundle(recipientId);
+          if (keyBundle) {
+            const keyPair = await keyManagementService.getKeyBundle(recipientId);
+            if (keyPair) {
+              const encryptedMessage = encryptionService.encryptMessage(
+                content,
+                keyBundle.identityKey.publicKey,
+                keyPair.identityKey.privateKey
+              );
+              encryptedContent = JSON.stringify(encryptedMessage);
+              encryptionKey = encryptedMessage.keyId;
+            }
           }
+        } catch (error) {
+          // If encryption fails, send unencrypted (cloud chat)
+          console.warn('Encryption failed, sending unencrypted:', error);
         }
       }
-      const response = await fetch(`${this.baseUrl}/messages`, {
+      const response = await fetch(`${this.baseUrl}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +113,6 @@ class ChatService {
           chatId,
           content: encryptedContent,
           type,
-          encryptionKey,
         }),
       });
 
@@ -88,8 +121,19 @@ class ChatService {
         throw new Error(errorData.message || 'Failed to send message');
       }
 
-      const data: Message = await response.json();
-      return data;
+      const data: any = await response.json();
+      return {
+        id: data.id,
+        chatId: data.chatId,
+        senderId: data.senderId,
+        content: data.content,
+        type: data.type,
+        timestamp: new Date(data.createdAt),
+        status: data.status || 'sent',
+        isEdited: data.editedAt != null,
+        isDeleted: data.deletedAt != null,
+        encryptionKey: encryptionKey || undefined,
+      };
     } catch (error: any) {
       throw new Error(error.message || 'Network error while sending message');
     }

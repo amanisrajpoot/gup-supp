@@ -11,7 +11,10 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          phone: credentials.phoneNumber,
+          password: credentials.password,
+        }),
       });
 
       if (!response.ok) {
@@ -19,8 +22,20 @@ class AuthService {
         throw new Error(errorData.message || 'Login failed');
       }
 
-      const data: AuthResponse = await response.json();
-      return data;
+      const data: any = await response.json();
+      return {
+        token: data.token,
+        refreshToken: data.refreshToken,
+        user: {
+          id: data.user.id,
+          phoneNumber: data.user.phone,
+          name: data.user.name,
+          avatar: data.user.avatar,
+          isOnline: false,
+          createdAt: new Date(data.user.createdAt || Date.now()),
+          updatedAt: new Date(),
+        },
+      };
     } catch (error: any) {
       throw new Error(error.message || 'Network error during login');
     }
@@ -28,12 +43,22 @@ class AuthService {
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
+      // First send OTP
+      await this.sendOTP(userData.phoneNumber);
+      
+      // For now, we'll need to verify OTP separately
+      // This is a simplified flow - in production, OTP verification should be separate
       const response = await fetch(`${this.baseUrl}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          phoneNumber: userData.phoneNumber,
+          name: userData.name,
+          password: userData.password,
+          otp: '000000', // Placeholder - should come from OTP verification step
+        }),
       });
 
       if (!response.ok) {
@@ -41,8 +66,20 @@ class AuthService {
         throw new Error(errorData.message || 'Registration failed');
       }
 
-      const data: AuthResponse = await response.json();
-      return data;
+      const data: any = await response.json();
+      return {
+        token: data.token,
+        refreshToken: data.refreshToken,
+        user: {
+          id: data.user.id,
+          phoneNumber: data.user.phone,
+          name: data.user.name,
+          avatar: data.user.avatar,
+          isOnline: false,
+          createdAt: new Date(data.user.createdAt || Date.now()),
+          updatedAt: new Date(),
+        },
+      };
     } catch (error: any) {
       throw new Error(error.message || 'Network error during registration');
     }
