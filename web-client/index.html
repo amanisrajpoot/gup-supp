@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleClone Web Client - PoC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0b141a;
+            color: #e9edef;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #202c33;
+            padding: 1rem;
+            border-bottom: 1px solid #313d45;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status {
+            font-size: 0.875rem;
+            color: #8696a0;
+        }
+
+        .status.connected {
+            color: #00a884;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #111b21;
+            border-right: 1px solid #313d45;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-section {
+            padding: 1rem;
+            border-bottom: 1px solid #313d45;
+        }
+
+        .auth-section input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #202c33;
+            border: 1px solid #313d45;
+            border-radius: 8px;
+            color: #e9edef;
+            font-size: 0.875rem;
+        }
+
+        .auth-section button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #00a884;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .auth-section button:hover {
+            background: #06cf9c;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 1rem;
+            border-bottom: 1px solid #313d45;
+            cursor: pointer;
+        }
+
+        .chat-item:hover {
+            background: #202c33;
+        }
+
+        .chat-item.active {
+            background: #2a3942;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #202c33;
+            padding: 1rem;
+            border-bottom: 1px solid #313d45;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .message {
+            max-width: 65%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background: #005c4b;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: #202c33;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: #8696a0;
+            margin-top: 0.25rem;
+        }
+
+        .input-area {
+            background: #202c33;
+            padding: 1rem;
+            border-top: 1px solid #313d45;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 0.75rem;
+            background: #2a3942;
+            border: 1px solid #313d45;
+            border-radius: 24px;
+            color: #e9edef;
+            font-size: 0.875rem;
+        }
+
+        .input-area button {
+            padding: 0.75rem 1.5rem;
+            background: #00a884;
+            border: none;
+            border-radius: 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .input-area button:hover {
+            background: #06cf9c;
+        }
+
+        .input-area button:disabled {
+            background: #313d45;
+            cursor: not-allowed;
+        }
+
+        .log {
+            background: #111b21;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #8696a0;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #313d45;
+        }
+
+        .log-entry {
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 TeleClone Web Client - PoC</h1>
+        <div class="status" id="status">Disconnected</div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="auth-section">
+                <h3>Authentication</h3>
+                <input type="text" id="phoneInput" placeholder="Phone number (e.g., +1234567890)" value="+1234567890">
+                <button onclick="sendOTP()">Send OTP</button>
+                <input type="text" id="otpInput" placeholder="OTP (dev: 123456)" value="123456">
+                <button onclick="verifyOTP()">Verify & Connect</button>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #313d45;">
+                    <input type="text" id="userIdInput" placeholder="User ID (for WebSocket)" value="">
+                    <button onclick="connectWebSocket()">Connect WebSocket</button>
+                </div>
+            </div>
+            <div class="chat-list" id="chatList">
+                <!-- Chats will be loaded here -->
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="chat-header">
+                <h2 id="chatTitle">Select a chat</h2>
+            </div>
+            <div class="messages" id="messages">
+                <div style="text-align: center; color: #8696a0; padding: 2rem;">
+                    No messages yet. Select a chat or send a message.
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="sendButton" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="log" id="log">
+        <div class="log-entry">Ready. Connect to start messaging.</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        const WS_BASE = 'ws://localhost:8080/ws';
+        
+        let token = null;
+        let userId = null;
+        let currentChatId = null;
+        let ws = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(text, connected = false) {
+            const status = document.getElementById('status');
+            status.textContent = text;
+            status.className = connected ? 'status connected' : 'status';
+        }
+
+        async function sendOTP() {
+            const phone = document.getElementById('phoneInput').value;
+            try {
+                const res = await fetch(`${API_BASE}/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: phone })
+                });
+                const data = await res.json();
+                log(`OTP sent: ${data.message}`);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function verifyOTP() {
+            const phone = document.getElementById('phoneInput').value;
+            const otp = document.getElementById('otpInput').value;
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: phone, otp: otp })
+                });
+                const data = await res.json();
+                token = data.token;
+                userId = data.user.id;
+                document.getElementById('userIdInput').value = userId;
+                log(`Authenticated as ${userId}`);
+                updateStatus(`Connected as ${userId}`, true);
+                loadChats();
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        async function loadChats() {
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE}/chat/chats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const chats = await res.json();
+                const chatList = document.getElementById('chatList');
+                chatList.innerHTML = '';
+                chats.forEach(chat => {
+                    const item = document.createElement('div');
+                    item.className = 'chat-item';
+                    item.textContent = chat.name || `Chat ${chat.id.substring(0, 8)}`;
+                    item.onclick = () => selectChat(chat.id);
+                    chatList.appendChild(item);
+                });
+            } catch (error) {
+                log(`Error loading chats: ${error.message}`);
+            }
+        }
+
+        function selectChat(chatId) {
+            currentChatId = chatId;
+            document.getElementById('sendButton').disabled = false;
+            loadMessages(chatId);
+        }
+
+        async function loadMessages(chatId) {
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE}/chat/messages/${chatId}?limit=50`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const messages = await res.json();
+                displayMessages(messages);
+            } catch (error) {
+                log(`Error loading messages: ${error.message}`);
+            }
+        }
+
+        function displayMessages(messages) {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            messages.forEach(msg => {
+                const isSent = msg.senderId === userId;
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+                messageDiv.innerHTML = `
+                    <div>${msg.content}</div>
+                    <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString()}</div>
+                `;
+                messagesDiv.appendChild(messageDiv);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            if (!token || !currentChatId) return;
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/chat/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        chatId: currentChatId,
+                        content: content,
+                        type: 'text'
+                    })
+                });
+                const message = await res.json();
+                input.value = '';
+                loadMessages(currentChatId);
+                log(`Message sent: ${content}`);
+            } catch (error) {
+                log(`Error sending message: ${error.message}`);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function connectWebSocket() {
+            const wsUserId = document.getElementById('userIdInput').value || userId;
+            if (!wsUserId) {
+                log('Please authenticate first or enter User ID');
+                return;
+            }
+
+            if (ws) {
+                ws.close();
+            }
+
+            ws = new WebSocket(`${WS_BASE}?userId=${wsUserId}`);
+
+            ws.onopen = () => {
+                log('WebSocket connected');
+                updateStatus('WebSocket Connected', true);
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                log(`Received: ${data.type}`);
+                if (data.type === 'message' && data.data.chatId === currentChatId) {
+                    loadMessages(currentChatId);
+                }
+            };
+
+            ws.onerror = (error) => {
+                log(`WebSocket error: ${error}`);
+            };
+
+            ws.onclose = () => {
+                log('WebSocket disconnected');
+                updateStatus('Disconnected', false);
+            };
+        }
+
+        // Initialize
+        log('TeleClone Web Client initialized');
+    </script>
+</body>
+</html>
