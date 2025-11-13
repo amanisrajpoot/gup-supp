@@ -1,6 +1,19 @@
-# Gup Supp
+# TeleClone
 
-A production-ready messaging app built with React Native and TypeScript, following clean architecture principles and structured development phases.
+A smart, open-source Telegram clone that keeps high-value features while removing cruft. Built with React Native (client) and Go (server), designed for extensibility and performance.
+
+> **Status**: MVP Server PoC Complete ✅ | Client Integration In Progress ⏳
+
+## 🎯 Project Overview
+
+TeleClone replicates Telegram's core features (cloud chats, groups, bots, file sharing, voice calls) while maintaining a clean, modular architecture. The project uses Telegram's open-source tooling (TDLib) where it speeds development and implements a custom server protocol optimized for MVP delivery.
+
+**Key Principles:**
+- ✅ High-value, high-usage features only
+- ✅ Modular, testable, containerized codebase
+- ✅ Bot API compatibility for easy bot migration
+- ✅ Performance-first: < 300ms message delivery
+- ❌ Removed: High-abuse features, legacy cruft
 
 ## 🚀 Features
 

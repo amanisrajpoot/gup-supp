@@ -1,11 +1,11 @@
 // API Constants
 export const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3000/api' 
-  : 'https://gup-supp-api.com/api';
+  ? 'http://localhost:8080/api' 
+  : 'https://api.teleclone.com/api';
 
 export const WS_BASE_URL = __DEV__
-  ? 'ws://localhost:3000'
-  : 'wss://gup-supp-websocket.com';
+  ? 'ws://localhost:8080/ws'
+  : 'wss://ws.teleclone.com/ws';
 
 // Storage Keys
 export const STORAGE_KEYS = {
