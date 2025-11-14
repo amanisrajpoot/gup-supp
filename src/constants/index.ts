@@ -1,11 +1,14 @@
 // API Constants
+// For Android emulator, use 10.0.2.2 instead of localhost
+// For iOS simulator, use localhost
+// For physical device, use your machine's IP address
 export const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3000/api' 
-  : 'https://gup-supp-api.com/api';
+  ? 'http://localhost:8080/api' 
+  : 'https://teleclone-api.com/api';
 
 export const WS_BASE_URL = __DEV__
-  ? 'ws://localhost:3000'
-  : 'wss://gup-supp-websocket.com';
+  ? 'ws://localhost:8080/ws'
+  : 'wss://teleclone-api.com/ws';
 
 // Storage Keys
 export const STORAGE_KEYS = {
